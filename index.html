@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/pinyin-pro"></script>
+    <title>Chinese Flashcards with Pinyin</title>
+    <style>
+        .flashcard {
+            font-size: 2.5rem;
+            min-height: 300px;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1.1rem;
+        }
+        .return-btn {
+            background-color: #6c757d;
+            color: white;
+        }
+        .hidden {
+            display: none;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>中文闪卡 Chinese Flashcards</h1>
+        
+        <!-- Input Section -->
+        <div class="input-section" id="inputSection">
+            <textarea id="input-words" 
+                      placeholder="输入中文词汇，用逗号分隔（例如：你好, 谢谢）"
+                      rows="3"></textarea>
+            <button onclick="initDeck()">开始 Start</button>
+        </div>
+
+        <!-- Flashcard Display -->
+        <div class="flashcard hidden" id="flashcard" onclick="flipCard()"></div>
+
+        <!-- Navigation Controls -->
+        <div class="controls hidden" id="controls">
+            <button onclick="prevCard()">← 上一个 Prev</button>
+            <button onclick="flipCard()">翻转 Flip</button>
+            <button onclick="nextCard()">下一个 Next →</button>
+            <button class="return-btn" onclick="returnToEdit()">返回编辑 Return to Edit</button>
+        </div>
+    </div>
+
+    <script>
+        let currentIndex = 0;
+        let deck = [];
+        let showPinyin = false;
+
+        function initCustomPinyin() {
+            if(window.pinyinPro && window.pinyinPro.addDict) {
+                window.pinyinPro.addDict({
+                    '嗯': 'ḿ',
+                    '嗄': 'á',
+                    '咯': 'lo',
+                    '谁': 'shéi',
+                    '〇': 'líng'
+                });
+            }
+        }
+
+        function initDeck() {
+            const input = document.getElementById('input-words').value;
+            deck = input.split(/[,，]/)
+                       .map(word => word.trim())
+                       .filter(word => word);
+            
+            if(deck.length === 0) {
+                alert("请输入有效的中文词汇！");
+                return;
+            }
+
+            document.getElementById('inputSection').classList.add('hidden');
+            document.getElementById('controls').classList.remove('hidden');
+            document.getElementById('flashcard').classList.remove('hidden');
+            
+            initCustomPinyin();
+            currentIndex = 0;
+            updateCard();
+        }
+
+        function returnToEdit() {
+            document.getElementById('inputSection').classList.remove('hidden');
+            document.getElementById('controls').classList.add('hidden');
+            document.getElementById('flashcard').classList.add('hidden');
+        }
+
+        function updateCard() {
+            const card = document.getElementById('flashcard');
+            if(deck[currentIndex]) {
+                card.textContent = showPinyin ? 
+                    getPinyin(deck[currentIndex]) : 
+                    deck[currentIndex];
+            }
+        }
+
+        function getPinyin(word) {
+            if(window.pinyinPro && window.pinyinPro.pinyin) {
+                return window.pinyinPro.pinyin(word, {
+                    toneType: 'symbol',
+                    type: 'array',
+                    multiple: true,
+                    mode: 'surname'
+                }).join(' ');
+            }
+            return word;
+        }
+
+        function flipCard() {
+            showPinyin = !showPinyin;
+            updateCard();
+        }
+
+        function prevCard() {
+            currentIndex = Math.max(0, currentIndex - 1);
+            showPinyin = false;
+            updateCard();
+        }
+
+        function nextCard() {
+            currentIndex = Math.min(deck.length - 1, currentIndex + 1);
+            showPinyin = false;
+            updateCard();
+        }
+
+        window.addEventListener('load', () => {
+            if(!window.pinyinPro) {
+                alert("Error loading pinyin-pro library. Please refresh the page.");
+            }
+            initCustomPinyin();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if(e.key === 'ArrowLeft') prevCard();
+            if(e.key === 'ArrowRight') nextCard();
+            if(e.key === ' ' || e.key === 'Enter') flipCard();
+        });
+    </script>
+</body>
+</html>
