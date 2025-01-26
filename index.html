@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中文闪卡 - Chinese Flashcards</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .flashcard {
+            font-size: 3rem;
+            min-height: 300px;
+            cursor: pointer;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .flipped {
+            transform: rotateY(180deg);
+        }
+        #controls { display: none; }
+        .card-counter { font-size: 1.2rem; color: #666; }
+        .pinyin-display { font-size: 1.5rem; color: #333; }
+    </style>
+</head>
+<body class="container py-4">
+    <!-- Input Section -->
+    <div class="mb-4">
+        <h2 class="text-center mb-3">中文闪卡练习</h2>
+        <textarea id="wordList" class="form-control" rows="4" 
+                  placeholder="输入中文词汇，用逗号分隔（例如：你好, 谢谢, 再见）"></textarea>
+        <button class="btn btn-primary mt-3 w-100" onclick="processText()">开始练习</button>
+    </div>
+
+    <!-- Flashcard Section -->
+    <div class="card mt-4 shadow">
+        <div class="card-body text-center">
+            <div class="card-counter mb-3" id="counter"></div>
+            <div id="flashcard" class="flashcard d-flex align-items-center justify-content-center"
+                 onclick="flipCard()"></div>
+            <div id="pinyin" class="pinyin-display mt-3"></div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div id="controls" class="text-center mt-4">
+        <div class="btn-group">
+            <button class="btn btn-lg btn-secondary" onclick="prevCard()">← 上一个</button>
+            <button class="btn btn-lg btn-primary mx-2" onclick="flipCard()">翻转</button>
+            <button class="btn btn-lg btn-secondary" onclick="nextCard()">下一个 →</button>
+        </div>
+    </div>
+
+    <!-- Pinyin Pro Library -->
+    <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@latest/dist/web/pinyin-pro.js"></script>
+    <script>
+        let currentIndex = 0;
+        let words = [];
+        let isFlipped = false;
+
+        // Custom dictionary for special pronunciations
+        function addCustomDict() {
+            window.pinyinPro.addDict({
+                '嗯': 'en',
+                '嗄': 'a',
+                '咯': 'lo',
+                '哟': 'yo',
+                '哪': 'na'
+            });
+        }
+
+        function processText() {
+            const input = document.getElementById('wordList').value;
+            words = input.split(/[,，]/)
+                        .map(w => w.trim())
+                        .filter(w => w);
+            
+            if(words.length === 0) {
+                alert("请输入有效的中文词汇！");
+                return;
+            }
+
+            addCustomDict();
+            document.getElementById('controls').style.display = 'block';
+            currentIndex = 0;
+            showCard();
+        }
+
+        function showCard() {
+            const card = document.getElementById('flashcard');
+            const pinyin = document.getElementById('pinyin');
+            const currentWord = words[currentIndex];
+            
+            // Reset card state
+            card.classList.remove('flipped');
+            isFlipped = false;
+            
+            // Update displays
+            card.textContent = currentWord;
+            pinyin.textContent = window.pinyinPro.convertToPinyin(currentWord, ' ', true, true);
+            updateCounter();
+        }
+
+        function flipCard() {
+            const card = document.getElementById('flashcard');
+            isFlipped = !isFlipped;
+            card.classList.toggle('flipped');
+        }
+
+        function updateCounter() {
+            document.getElementById('counter').textContent = 
+                `卡片 ${currentIndex + 1} / ${words.length}`;
+        }
+
+        function prevCard() {
+            currentIndex = Math.max(0, currentIndex - 1);
+            showCard();
+        }
+
+        function nextCard() {
+            currentIndex = Math.min(words.length - 1, currentIndex + 1);
+            showCard();
+        }
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if(e.key === 'ArrowLeft') prevCard();
+            if(e.key === 'ArrowRight') nextCard();
+            if(e.key === ' ') flipCard();
+        });
+
+        // Error handling
+        window.addEventListener('error', (e) => {
+            alert(`发生错误: ${e.message}`);
+        });
+
+        // Initialize pinyin-pro
+        window.addEventListener('load', () => {
+            if(!window.pinyinPro) {
+                alert("拼音库加载失败，请刷新页面重试");
+            }
+        });
+    </script>
+</body>
+</html>
