@@ -472,8 +472,8 @@
     // Use version 2 of the translation library.
     translate.setUseVersion2();
     // Optionally, force the target language to English:
-    translate.setTarget('english');
     translate.language.setDefaultTo('english');
+    translate.changeLanguage('english');
     // Execute the translation initialization.
     translate.execute();
   </script>
