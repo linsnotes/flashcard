@@ -1,281 +1,480 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Add these right after the viewport meta tag -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <script src="https://cdn.jsdelivr.net/npm/pinyin-pro?v=1.0"></script>
-    <title>博闻强记</title>
+  <!-- Specify the character encoding for the document -->
+  <meta charset="UTF-8">
+  <!-- Set the viewport for responsive design -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Prevent caching of the page -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <!-- Include the pinyin-pro library for converting Chinese characters to pinyin -->
+  <script src="https://cdn.jsdelivr.net/npm/pinyin-pro?v=1.0"></script>
+  <!-- Set the title of the webpage -->
+  <title class="ignore">博闻强记</title>
 
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+  <!-- CSS Styling Section -->
+  <style>
+    /* --------------------------------------------------
+       Global Reset and Base Styles
+       - Removes default margins and paddings.
+       - Sets a base font, background, and text color.
+    ----------------------------------------------------- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: #f8f9fa; /* Light gray background */
+      color: #333; /* Dark text color */
+      line-height: 1.6; /* Improve readability */
+    }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
-                         "Helvetica Neue", Arial, sans-serif;
-            background-color: #f8f9fa;
-            color: #333;
-            line-height: 1.6;
-        }
+    #translate {
+      display: none;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
 
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+    /* --------------------------------------------------
+       Header Styles
+       - Styles for the page header.
+    ----------------------------------------------------- */
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
 
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+    /* --------------------------------------------------
+       Input Section Styles
+       - Styles for the textarea and start button.
+    ----------------------------------------------------- */
+    .input-section {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 20px;
+    }
+    textarea {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      resize: vertical; /* Allow vertical resizing */
+    }
 
-        .input-section {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 20px;
-        }
+    /* --------------------------------------------------
+       Flashcard Container and Card Styles
+       - Styles for the flashcard container, the inner card,
+         and the front/back sides of the card.
+    ----------------------------------------------------- */
+    .flashcard {
+        font-size: 3rem; /* Large font size for card content */
+        height: 300px; /* Fixed height for larger screens */
+        margin: 20px auto;
+        cursor: pointer; /* Indicates clickable card */
+        perspective: 1000px; /* Set up 3D perspective for flip effect */
+        width: 100%;
+        max-width: 400px;
+        position: relative;
+    }
+    /* Define the flashcard inner container with consistent sizing and GPU optimization */
+    .flashcard-inner {
+        position: relative;
+        width: 100%;
+        height: 100%; /* Ensure inner container fills the flashcard */
+        transition: transform 0.6s; /* Smooth flip transition */
+        transform-style: preserve-3d;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        will-change: transform;
+    }
+    /* Apply the flip transform without altering height */
+    .flashcard.flipped .flashcard-inner {
+        transform: rotateY(180deg);
+    }
+    /* --------------------------------------------------
+       Common Styles for Front and Back Sides
+       - Both sides will be exactly the same size.
+    ----------------------------------------------------- */
+    .front, .back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden; /* Hide back face during flip */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        padding: 25px;
+        text-align: center;
+    }
+    /* --------------------------------------------------
+       Front Side Styles
+    ----------------------------------------------------- */
+    .front {
+        background-color: #e3f2fd; /* Light blue background */
+        color: #1976d2; /* Blue text color */
+    }
+    /* --------------------------------------------------
+       Back Side Styles
+       - The back is pre-rotated for the flip effect.
+    ----------------------------------------------------- */
+    .back {
+        background-color: #e8f5e9; /* Light green background */
+        color: #2e7d32; /* Green text color */
+        flex-direction: column;
+        transform: rotateY(180deg); /* Pre-rotated for flip effect */
+    }
 
-        textarea {
-            width: 100%;
-            padding: 10px;
-            font-size: 1rem;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            resize: vertical;
-        }
+    /* Pinyin Text Styling on the Back of the Card */
+    .pinyin {
+      font-size: 3rem;
+    }
+    /* English Translation Container Styling */
+    .english {
+      margin-top: 10px;
+      font-size: 3rem;
+      color: #555;
+    }
 
-        /* Updated Flashcard Styling */
-        .flashcard {
-            font-size: 2.5rem;
-            min-height: 300px;
-            margin: 20px auto;
-            cursor: pointer;
-            perspective: 1000px;
-            width: 100%;
-            max-width: 400px;
-        }
+    /* --------------------------------------------------
+       Controls (Buttons) Styles
+       - Styles for navigation, flip, return, and shuffle buttons.
+    ----------------------------------------------------- */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    /* Common Button Styles */
+    button {
+      padding: 12px 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    /* Button Styles */
+    .start-btn, .prev-btn, .next-btn {
+      background-color: #007bff;
+      color: #fff;
+    }
+    .start-btn:hover, .prev-btn:hover, .next-btn:hover {
+      background-color: #0056b3;
+    }
 
-        .flashcard-inner {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            transition: transform 0.6s;
-            transform-style: preserve-3d;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
+    /* Flip Button Specific Styles */
+    .flip-btn {
+      background-color: rgb(198, 81, 93);
+      color: #fff;
+    }
+    .flip-btn:hover {
+      background-color: rgb(172, 59, 70);
+    }
 
-        .flashcard.flipped .flashcard-inner {
-            transform: rotateY(180deg);
-        }
+    /* Shuffle Button Specific Styles */
+    .shuffle-btn {
+      background-color: rgb(131, 182, 30);
+      color: #fff;
+    }
+    .shuffle-btn:hover {
+      background-color: rgb(86, 126, 7);
+    }
 
-        .front, .back {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            padding: 25px;
-            text-align: center;
-        }
+    /* Return Button Specific Styles */
+    .return-btn {
+      background-color: #6c757d;
+      color: #fff;
+    }
+    .return-btn:hover {
+      background-color: #5a6268;
+    }
+    /* Utility Class to Hide Elements */
+    .hidden {
+      display: none;
+    }
 
-        .front {
-            background-color: #e3f2fd; /* Modern UI Blue */
-            color: #1976d2;
-        }
+    /* --------------------------------------------------
+       Progress Indicator Styles
+       - Displays the current card number out of total.
+    ----------------------------------------------------- */
+    #progress {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 1.2rem;
+      color: #333;
+    }
 
-        .back {
-            background-color: #e8f5e9; /* Modern UI Green */
-            color: #2e7d32;
-            transform: rotateY(180deg);
-        }
-
-        .controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        button {
-            padding: 12px 20px;
-            font-size: 1rem;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        button:not(.return-btn) {
-            background-color: #007bff;
-            color: #fff;
-        }
-
-        button:not(.return-btn):hover {
-            background-color: #0056b3;
-        }
-
-        .return-btn {
-            background-color: #6c757d;
-            color: #fff;
-        }
-
-        .return-btn:hover {
-            background-color: #5a6268;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        @media (max-width: 576px) {
-            .flashcard {
-                font-size: 2rem;
-                min-height: 200px;
-                margin: 15px auto;
-                max-width: 320px;
-            }
-            
-            .front, .back {
-                padding: 20px;
-            }
-            
-            button {
-                font-size: 0.9rem;
-                padding: 10px 16px;
-            }
-        }
-    </style>
+    /* --------------------------------------------------
+       Responsive Design Adjustments for Small Screens
+    ----------------------------------------------------- */
+    @media (max-width: 576px) {
+      .flashcard {
+        font-size: 2rem;
+        height: 200px;  /* Override fixed height for smaller screens */
+        margin: 15px auto;
+        max-width: 320px;
+      }
+      .front, .back {
+        padding: 20px;
+      }
+      button {
+        font-size: 0.9rem;
+        padding: 10px 16px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>中文闪卡<br>Chinese Flashcards</h1>
-        
-        <div class="input-section" id="inputSection">
-            <textarea id="input-words" 
-                      placeholder="输入中文词汇，用逗号分隔（例如：你好, 谢谢）"
-                      rows="3"></textarea>
-            <button onclick="initDeck()">开始 Start</button>
-        </div>
-
-        <div class="flashcard hidden" id="flashcard" onclick="flipCard()">
-            <div class="flashcard-inner">
-                <div class="front"></div>
-                <div class="back"></div>
-            </div>
-        </div>
-
-        <div class="controls hidden" id="controls">
-            <button onclick="prevCard()">← 上一个 Prev</button>
-            <button onclick="nextCard()">下一个 Next →</button>
-            <button class="return-btn" onclick="returnToEdit()">返回编辑 Return to Edit</button>
-            <button onclick="flipCard()">翻转 Flip</button>
-        </div>
+  <!-- Main container for all content -->
+  <div class="container">
+    <!-- Header: Displays the title (marked with "ignore" to exclude from translation) -->
+    <h1 class="ignore">中文闪卡<br>Chinese Flashcards</h1>
+    
+    <!-- Input Section: Contains textarea and start button (also marked as "ignore") -->
+    <div class="input-section ignore" id="inputSection">
+      <textarea id="input-words" class="ignore"
+                placeholder="输入中文词汇，用逗号分隔（例如：你好, 谢谢）"
+                rows="3"></textarea>
+      <button onclick="initDeck()" class="start-btn ignore">开始 Start</button>
     </div>
 
-    <script>
-        let currentIndex = 0;
-        let deck = [];
+    <!-- Flashcard Container: Initially hidden; displays flashcard once deck is initialized -->
+    <div class="flashcard hidden" id="flashcard" onclick="flipCard()">
+      <div class="flashcard-inner">
+        <!-- Front Side of the Flashcard -->
+        <div class="front ignore"></div>
+        <!-- Back Side of the Flashcard -->
+        <div class="back"></div>
+      </div>
+    </div>
 
-        function initCustomPinyin() {
-            if(window.pinyinPro && window.pinyinPro.addDict) {
-                window.pinyinPro.addDict({
-                    '嗯': 'ḿ',
-                    '嗄': 'á',
-                    '咯': 'lo',
-                    '谁': 'shéi',
-                    '〇': 'líng'
-                });
-            }
-        }
+    <!-- Progress Indicator: Shows current flashcard progress -->
+    <div id="progress" class="ignore hidden"></div>
 
-        function initDeck() {
-            const input = document.getElementById('input-words').value;
-            deck = input.split(/[,，]/)
-                       .map(word => word.trim())
-                       .filter(word => word);
-            
-            if(deck.length === 0) {
-                alert("请输入有效的中文词汇！");
-                return;
-            }
+    <!-- Controls: Navigation, flip, return, and shuffle buttons; initially hidden -->
+    <div class="controls hidden ignore" id="controls">
+      <button onclick="prevCard()" class="prev-btn ignore">← 上一个 Prev</button>
+      <button onclick="flipCard()" class="flip-btn ignore">翻转 Flip</button>   
+      <button onclick="nextCard()" class="next-btn ignore">下一个 Next →</button>
+      <button class="return-btn ignore" onclick="returnToEdit()">返回编辑 Return to Edit</button>
+      <button onclick="shuffleDeck()" class="shuffle-btn ignore">打乱顺序 Shuffle Cards</button>
+    </div>
+  </div>
 
-            document.getElementById('inputSection').classList.add('hidden');
-            document.getElementById('controls').classList.remove('hidden');
-            document.getElementById('flashcard').classList.remove('hidden');
-            
-            initCustomPinyin();
-            currentIndex = 0;
-            updateCard();
-        }
+  <!-- JavaScript Section -->
+  <script>
+    // Global variables: current card index and the deck array.
+    let currentIndex = 0;
+    let deck = [];
 
-        function returnToEdit() {
-            document.getElementById('inputSection').classList.remove('hidden');
-            document.getElementById('controls').classList.add('hidden');
-            document.getElementById('flashcard').classList.add('hidden');
-        }
-
-        function updateCard() {
-            const front = document.querySelector('.front');
-            const back = document.querySelector('.back');
-            if(deck[currentIndex]) {
-                front.textContent = deck[currentIndex];
-                back.textContent = getPinyin(deck[currentIndex]);
-            }
-        }
-
-        function getPinyin(word) {
-            if(window.pinyinPro && window.pinyinPro.pinyin) {
-                return window.pinyinPro.pinyin(word, {
-                    toneType: 'symbol',
-                    type: 'array',
-                    multiple: true,
-                    mode: 'surname'
-                }).join(' ');
-            }
-            return word;
-        }
-
-        function flipCard() {
-            document.getElementById('flashcard').classList.toggle('flipped');
-        }
-
-        function prevCard() {
-            currentIndex = Math.max(0, currentIndex - 1);
-            document.getElementById('flashcard').classList.remove('flipped');
-            updateCard();
-        }
-
-        function nextCard() {
-            currentIndex = Math.min(deck.length - 1, currentIndex + 1);
-            document.getElementById('flashcard').classList.remove('flipped');
-            updateCard();
-        }
-
-        window.addEventListener('load', () => {
-            if(!window.pinyinPro) {
-                alert("Error loading pinyin-pro library. Please refresh the page.");
-            }
-            initCustomPinyin();
+    // --------------------------------------------------
+    // Function: initCustomPinyin
+    // Purpose: Add custom pinyin mappings for specific Chinese characters.
+    // --------------------------------------------------
+    function initCustomPinyin() {
+      if (window.pinyinPro && window.pinyinPro.addDict) {
+        window.pinyinPro.addDict({
+          '嗯': 'ḿ',
+          '嗄': 'á',
+          '咯': 'lo',
+          '谁': 'shéi',
+          '〇': 'líng'
         });
+      }
+    }
 
-        document.addEventListener('keydown', (e) => {
-            if(e.key === 'ArrowLeft') prevCard();
-            if(e.key === 'ArrowRight') nextCard();
-            if(e.key === ' ' || e.key === 'Enter') flipCard();
-        });
-    </script>
+    // --------------------------------------------------
+    // Function: initDeck
+    // Purpose: Initialize the flashcard deck using user input.
+    // --------------------------------------------------
+    function initDeck() {
+      const input = document.getElementById('input-words').value;
+      // Split input on commas (supports both Chinese and English commas), trim spaces, and filter out empties.
+      deck = input.split(/[,，]/)
+                  .map(word => word.trim())
+                  .filter(word => word);
+      
+      if (deck.length === 0) {
+        alert("请输入有效的中文词汇！");
+        return;
+      }
+
+      // Hide the input section and show the flashcard, progress indicator, and controls.
+      document.getElementById('inputSection').classList.add('hidden');
+      document.getElementById('controls').classList.remove('hidden');
+      document.getElementById('flashcard').classList.remove('hidden');
+      
+      initCustomPinyin();
+      currentIndex = 0;
+      updateCard();
+    }
+
+    // --------------------------------------------------
+    // Function: returnToEdit
+    // Purpose: Return to the input mode by showing the input section and hiding flashcard, progress indicator, and controls.
+    // --------------------------------------------------
+    function returnToEdit() {
+      document.getElementById('inputSection').classList.remove('hidden');
+      document.getElementById('controls').classList.add('hidden');
+      document.getElementById('flashcard').classList.add('hidden');
+      // Hide progress indicator when returning to edit mode.
+      document.getElementById('progress').classList.add('hidden');
+    }
+
+    // --------------------------------------------------
+    // Function: updateCard
+    // Purpose: Update the flashcard content (both front and back) based on the current index,
+    //          and update the progress indicator.
+    // --------------------------------------------------
+    function updateCard() {
+      const front = document.querySelector('.front');
+      const back = document.querySelector('.back');
+      const progress = document.getElementById('progress');
+      if (deck[currentIndex]) {
+        // Set the front to display the original Chinese text.
+        front.textContent = deck[currentIndex];
+        front.classList.add('ignore');
+
+        // Generate the pinyin version of the current word.
+        const pinyinText = getPinyin(deck[currentIndex]);
+
+        // Set the back of the card to include pinyin and a placeholder for the English translation.
+        back.innerHTML = `<div>
+                            <div class="pinyin ignore">${pinyinText}</div>
+                            <div class="english">${deck[currentIndex]}</div>
+                          </div>`;
+        // Update the progress indicator text.
+        progress.textContent = `Card ${currentIndex + 1} of ${deck.length}`;
+        progress.classList.remove('hidden');
+        
+        // If the translation library is loaded, trigger the translation.
+        if (window.translate && typeof translate.execute === 'function') {
+          translate.execute();
+        }
+      }
+    }
+
+    // --------------------------------------------------
+    // Function: getPinyin
+    // Purpose: Convert a Chinese word to its pinyin representation using the pinyinPro library.
+    // --------------------------------------------------
+    function getPinyin(word) {
+      if (window.pinyinPro && window.pinyinPro.pinyin) {
+        return window.pinyinPro.pinyin(word, {
+          toneType: 'symbol', // Use tone symbols
+          type: 'array',      // Output as an array of strings
+          multiple: true,     // Allow multiple pronunciations if applicable
+          mode: 'surname'     // Use surname mode if applicable
+        }).join(' ');
+      }
+      // Fallback: return the original word if conversion is not possible.
+      return word;
+    }
+
+    // --------------------------------------------------
+    // Function: flipCard
+    // Purpose: Toggle the flip effect on the flashcard.
+    // --------------------------------------------------
+    function flipCard() {
+      document.getElementById('flashcard').classList.toggle('flipped');
+    }
+
+    // --------------------------------------------------
+    // Function: prevCard
+    // Purpose: Navigate to the previous flashcard.
+    // --------------------------------------------------
+    function prevCard() {
+      currentIndex = Math.max(0, currentIndex - 1);
+      // Remove any flipped state before updating.
+      document.getElementById('flashcard').classList.remove('flipped');
+      updateCard();
+    }
+
+    // --------------------------------------------------
+    // Function: nextCard
+    // Purpose: Navigate to the next flashcard.
+    //          If on the last card, ask the user if they want to restart.
+    // --------------------------------------------------
+    function nextCard() {
+      if (currentIndex >= deck.length - 1) {
+        // Use confirm to allow user to cancel restarting.
+        if (confirm("You've reached the end of the flashcards! Restart from the beginning?")) {
+          currentIndex = 0;
+        } else {
+          // If the user chooses 'No', do not restart.
+          return;
+        }
+      } else {
+        currentIndex++;
+      }
+      // Remove any flipped state before updating.
+      document.getElementById('flashcard').classList.remove('flipped');
+      updateCard();
+    }
+
+    // --------------------------------------------------
+    // Function: shuffleDeck
+    // Purpose: Randomize the order of the flashcards using the Fisher-Yates algorithm.
+    // --------------------------------------------------
+    function shuffleDeck() {
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+      // Reset to the first card after shuffling.
+      currentIndex = 0;
+      // Remove any flipped state before updating.
+      document.getElementById('flashcard').classList.remove('flipped');
+      updateCard();
+    }
+
+    // --------------------------------------------------
+    // Event Listener: Window Load
+    // Purpose: Ensure the pinyinPro library has loaded and initialize custom pinyin mappings.
+    // --------------------------------------------------
+    window.addEventListener('load', () => {
+      if (!window.pinyinPro) {
+        alert("Error loading pinyin-pro library. Please refresh the page.");
+      }
+      initCustomPinyin();
+    });
+
+    // --------------------------------------------------
+    // Event Listener: Keyboard Controls
+    // Purpose: Enable keyboard navigation and flip controls.
+    // --------------------------------------------------
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') prevCard();
+      if (e.key === 'ArrowRight') nextCard();
+      if (e.key === ' ' || e.key === 'Enter') flipCard();
+    });
+  </script>
+
+  <!-- Translation Library Integration -->
+  <!-- Include the translate.js library -->
+  <script src="https://res.zvo.cn/translate/translate.js"></script>
+  <script>
+    // Exclude elements with the "ignore" class from translation.
+    translate.ignore.class.push('ignore');
+    // Use version 2 of the translation library.
+    translate.setUseVersion2();
+    // Optionally, force the target language to English:
+    translate.setTarget('english');
+    // Execute the translation initialization.
+    translate.execute();
+  </script>
 </body>
 </html>
