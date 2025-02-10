@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <!-- ---------------------------- -->
-  <!-- Document Meta Information    -->
-  <!-- ---------------------------- -->
   <!-- Specify the character encoding for the document -->
   <meta charset="UTF-8">
   <!-- Set the viewport for responsive design -->
@@ -12,24 +9,17 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  
-  <!-- ---------------------------- -->
-  <!-- External Libraries & Scripts -->
-  <!-- ---------------------------- -->
   <!-- Include the pinyin-pro library for converting Chinese characters to pinyin -->
   <script src="https://cdn.jsdelivr.net/npm/pinyin-pro?v=1.0"></script>
-  <!-- Set the title of the webpage (with class "ignore" so translation library skips it) -->
+  <!-- Set the title of the webpage -->
   <title class="ignore">博闻强记</title>
-  <!-- Goatcounter analytics script -->
   <script data-goatcounter="https://linsnotes.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
-  
-  <!-- ---------------------------- -->
-  <!-- CSS Styling Section          -->
-  <!-- ---------------------------- -->
+  <!-- CSS Styling Section -->
   <style>
     /* --------------------------------------------------
        Global Reset and Base Styles
-       - Removes default margins/paddings and sets basic styles.
+       - Removes default margins and paddings.
+       - Sets a base font, background, and text color.
     ----------------------------------------------------- */
     * {
       box-sizing: border-box;
@@ -43,38 +33,27 @@
       line-height: 1.6; /* Improve readability */
     }
 
-    /* ---------------------------- */
-    /* Visitor Counter Styles     */
-    /* ---------------------------- */
     #visitor-counter {
       font-size: 1em;
       margin: 20px 0;
       text-align: center;
       color: #333;
     }
+    
     #visitor-counter #pageviews {
       font-weight: bold;
       color: #000;
     }
 
-    /* ---------------------------- */
-    /* Footer Styles              */
-    /* ---------------------------- */
     footer {
       margin-top: 30px;
       margin-bottom: 20px;
     }
 
-    /* ---------------------------- */
-    /* Translation Container (hidden) */
-    /* ---------------------------- */
     #translate {
       display: none;
     }
     
-    /* ---------------------------- */
-    /* Main Container Styles      */
-    /* ---------------------------- */
     .container {
       max-width: 600px;
       margin: 0 auto;
@@ -122,7 +101,7 @@
     #toggleDropdown:hover {
       background-color: #15bb3b;
     }
-    /* Dropdown section styling */
+    /* New dropdown styling (adapted from Code 2, but consistent with Code 1) */
     #dropdownSection {
       margin: 10px 0;
       padding: 10px;
@@ -153,8 +132,7 @@
     }
 
     /* -----------------------------
-       Spinner CSS
-       - Shows a spinner during API data fetching.
+       Spinner CSS (added)
     ------------------------------ */
     #spinner-container {
       display: flex;
@@ -188,7 +166,8 @@
 
     /* --------------------------------------------------
        Flashcard Container and Card Styles
-       - Styles for the flashcard container and the card’s inner elements.
+       - Styles for the flashcard container, the inner card,
+         and the front/back sides of the card.
     ----------------------------------------------------- */
     .flashcard {
         font-size: 3rem; /* Large font size for card content */
@@ -200,7 +179,7 @@
         max-width: 400px;
         position: relative;
     }
-    /* Inner container for the flashcard with smooth flip transition */
+    /* Define the flashcard inner container with consistent sizing and GPU optimization */
     .flashcard-inner {
         position: relative;
         width: 100%;
@@ -211,19 +190,19 @@
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         will-change: transform;
     }
-    /* Flip effect: rotates the inner container when card is flipped */
+    /* Apply the flip transform without altering height */
     .flashcard.flipped .flashcard-inner {
         transform: rotateY(180deg);
     }
     /* --------------------------------------------------
-       Front and Back Side Common Styles
-       - Ensures both sides of the card have the same dimensions.
+       Common Styles for Front and Back Sides
+       - Both sides will be exactly the same size.
     ----------------------------------------------------- */
     .front, .back {
         position: absolute;
         width: 100%;
         height: 100%;
-        backface-visibility: hidden; /* Hide back face when not visible */
+        backface-visibility: hidden; /* Hide back face during flip */
         display: flex;
         align-items: center;
         justify-content: center;
@@ -231,25 +210,29 @@
         padding: 25px;
         text-align: center;
     }
-    /* Front side styles */
+    /* --------------------------------------------------
+       Front Side Styles
+    ----------------------------------------------------- */
     .front {
         background-color: #e3f2fd; /* Light blue background */
         color: #1976d2; /* Blue text color */
     }
-    /* Back side styles */
+    /* --------------------------------------------------
+       Back Side Styles
+       - The back is pre-rotated for the flip effect.
+    ----------------------------------------------------- */
     .back {
         background-color: #e8f5e9; /* Light green background */
         color: #2e7d32; /* Green text color */
         flex-direction: column;
-        transform: rotateY(180deg); /* Pre-rotate for flip effect */
+        transform: rotateY(180deg); /* Pre-rotated for flip effect */
     }
 
-    /* -----------------------------
-       Pinyin and English Text Styles
-    ------------------------------ */
+    /* Pinyin Text Styling on the Back of the Card */
     .pinyin {
       font-size: 3rem;
     }
+    /* English Translation Container Styling */
     .english {
       margin-top: 10px;
       font-size: 3rem;
@@ -267,7 +250,7 @@
       justify-content: center;
       margin-top: 20px;
     }
-    /* Common button styles */
+    /* Common Button Styles */
     button {
       padding: 12px 20px;
       font-size: 1rem;
@@ -276,7 +259,7 @@
       cursor: pointer;
       transition: background-color 0.3s ease;
     }
-    /* Specific button colors */
+    /* Button Styles */
     .start-btn, .prev-btn, .next-btn {
       background-color: #007bff;
       color: #fff;
@@ -284,6 +267,8 @@
     .start-btn:hover, .prev-btn:hover, .next-btn:hover {
       background-color: #0056b3;
     }
+
+    /* Flip Button Specific Styles */
     .flip-btn {
       background-color: rgb(198, 81, 93);
       color: #fff;
@@ -291,6 +276,8 @@
     .flip-btn:hover {
       background-color: rgb(172, 59, 70);
     }
+
+    /* Shuffle Button Specific Styles */
     .shuffle-btn {
       background-color: rgb(131, 182, 30);
       color: #fff;
@@ -298,6 +285,8 @@
     .shuffle-btn:hover {
       background-color: rgb(86, 126, 7);
     }
+
+    /* Return Button Specific Styles */
     .return-btn {
       background-color: #6c757d;
       color: #fff;
@@ -305,14 +294,14 @@
     .return-btn:hover {
       background-color: #5a6268;
     }
-    /* Utility class to hide elements */
+    /* Utility Class to Hide Elements */
     .hidden {
       display: none;
     }
 
     /* --------------------------------------------------
        Progress Indicator Styles
-       - Displays current flashcard number out of total.
+       - Displays the current card number out of total.
     ----------------------------------------------------- */
     #progress {
       text-align: center;
@@ -327,7 +316,7 @@
     @media (max-width: 576px) {
       .flashcard {
         font-size: 2rem;
-        height: 200px;  /* Smaller height for small screens */
+        height: 200px;  /* Override fixed height for smaller screens */
         margin: 15px auto;
         max-width: 320px;
       }
@@ -342,29 +331,23 @@
   </style>
 </head>
 <body>
-  <!-- ---------------------------- -->
-  <!-- Main Application Container   -->
-  <!-- ---------------------------- -->
+  <!-- Main container for all content -->
   <div class="container">
-    <!-- Header: Application title (excluded from translation) -->
+    <!-- Header: Displays the title (marked with "ignore" to exclude from translation) -->
     <h1 class="ignore">中文闪卡<br>Chinese Flashcards</h1>
     
-    <!-- ---------------------------- -->
-    <!-- Input Section              -->
-    <!-- ---------------------------- -->
-    <!-- Contains manual input textarea, dropdown toggle/selection, and start button -->
+    <!-- Input Section: Contains textarea, dropdown toggle, dropdown selection UI, and start button -->
     <div class="input-section ignore" id="inputSection">
-      <!-- Manual input textarea for comma-separated Chinese words -->
+      <!-- Manual input textarea -->
       <textarea id="input-words" class="ignore"
                 placeholder="输入中文词汇，用逗号分隔（例如：你好, 谢谢）"
                 rows="3"></textarea>
 
-      <!-- Button to toggle the visibility of the dropdown selection section -->
+      <!-- Toggle button for the dropdown section -->
       <button type="button" id="toggleDropdown" onclick="toggleDropdownSection()">下拉选择词语表</button>
 
-      <!-- Dropdown selection section (hidden by default) -->
+      <!-- Dropdown selection UI (hidden by default) -->
       <div id="dropdownSection" class="hidden">
-        <!-- Dropdown for selecting the course -->
         <div class="dropdown-container" id="bandingContainer">
           <label for="banding" class="input-label">科目 Course</label>
           <select id="banding" name="banding" class="dropdown">
@@ -375,7 +358,6 @@
             <option value="HCL">HCL</option>
           </select>
         </div>
-        <!-- Dropdown for selecting the level -->
         <div class="dropdown-container" id="levelContainer">
           <label for="level" class="input-label">年级 Level</label>
           <select id="level" name="level" class="dropdown">
@@ -386,7 +368,6 @@
             <option value="中四">中四</option>
           </select>
         </div>
-        <!-- Dropdown for selecting the unit -->
         <div class="dropdown-container" id="unitContainer">
           <label for="unit" class="input-label">单元 Unit</label>
           <select id="unit" name="unit" class="dropdown">
@@ -399,7 +380,6 @@
             <option value="单元六">单元六</option>
           </select>
         </div>
-        <!-- Dropdown for selecting the passage -->
         <div class="dropdown-container" id="passageContainer">
           <label for="passage" class="input-label">课文 Passage</label>
           <select id="passage" name="passage" class="dropdown">
@@ -412,36 +392,30 @@
         </div>
       </div>
       
-      <!-- Start button to initialize the flashcard deck -->
+      <!-- Start button remains at the bottom of the input section -->
       <button onclick="initDeck()" class="start-btn ignore">开始 Start</button>
       
-      <!-- Spinner container: Displays loading animation during data fetch (hidden by default) -->
+      <!-- Spinner container (hidden by default) -->
       <div id="spinner-container" class="hidden">
         <div class="spinner"></div>
         <p class="loading-text">加载中... Please wait!</p>
       </div>
     </div>
 
-    <!-- ---------------------------- -->
-    <!-- Flashcard Display Section  -->
-    <!-- ---------------------------- -->
-    <!-- Flashcard container (hidden until deck is initialized) -->
+    <!-- Flashcard Container: Initially hidden; displays flashcard once deck is initialized -->
     <div class="flashcard hidden" id="flashcard" onclick="flipCard()">
       <div class="flashcard-inner">
-        <!-- Front side: Displays the Chinese word -->
+        <!-- Front Side of the Flashcard -->
         <div class="front ignore"></div>
-        <!-- Back side: Displays the pinyin and placeholder for English translation -->
+        <!-- Back Side of the Flashcard -->
         <div class="back"></div>
       </div>
     </div>
 
-    <!-- Progress Indicator: Shows current flashcard number and total (hidden by default) -->
+    <!-- Progress Indicator: Shows current flashcard progress -->
     <div id="progress" class="ignore hidden"></div>
 
-    <!-- ---------------------------- -->
-    <!-- Flashcard Controls         -->
-    <!-- ---------------------------- -->
-    <!-- Navigation buttons (hidden by default) -->
+    <!-- Controls: Navigation, flip, return, and shuffle buttons; initially hidden -->
     <div class="controls hidden ignore" id="controls">
       <button onclick="prevCard()" class="prev-btn ignore">← Previous</button>
       <button onclick="flipCard()" class="flip-btn ignore">Flip</button>   
@@ -451,24 +425,18 @@
     </div>
   </div>
   
-  <!-- ---------------------------- -->
-  <!-- Footer Section             -->
-  <!-- ---------------------------- -->
   <footer>
     <div id="visitor-counter">
       Welcome! You’re visitor #<span id="pageviews">Loading...</span> 
     </div>
   </footer>
-  
-  <!-- ---------------------------- -->
-  <!-- JavaScript Section         -->
-  <!-- ---------------------------- -->
+  <!-- JavaScript Section -->
   <script>
-    // Global variables for tracking the flashcard state
-    let currentIndex = 0; // Index of the currently displayed flashcard
-    let deck = [];        // Array to store the flashcard words
+    // Global variables: current card index and the deck array.
+    let currentIndex = 0;
+    let deck = [];
 
-    // Helper function for quick DOM element lookup by ID
+    // Helper function to cache DOM lookups.
     const getEl = (id) => document.getElementById(id);
 
     // --------------------------------------------------
@@ -477,7 +445,6 @@
     // --------------------------------------------------
     function initCustomPinyin() {
       if (window.pinyinPro && window.pinyinPro.addDict) {
-        // Custom dictionary for improved pinyin conversion
         window.pinyinPro.addDict({
           '嗯': 'ḿ',
           '嗄': 'á',
@@ -489,9 +456,7 @@
     }
 
     // --------------------------------------------------
-    // Utility: isDropdownMode
-    // Purpose: Check whether all dropdowns have a selected value.
-    // Returns: true if dropdown mode is active; otherwise false.
+    // Utility: Check if all dropdowns have a selection.
     // --------------------------------------------------
     function isDropdownMode() {
       return getEl('banding').value !== "" &&
@@ -501,9 +466,7 @@
     }
 
     // --------------------------------------------------
-    // Utility: extractWordsFromGroupedData
-    // Purpose: Recursively extract words from a nested data object.
-    // Returns: An array of words extracted from the nested structure.
+    // Utility: Recursively extract words from a nested object.
     // --------------------------------------------------
     function extractWordsFromGroupedData(obj) {
       let words = [];
@@ -519,35 +482,33 @@
 
     // --------------------------------------------------
     // Helper: setupDeckUI
-    // Purpose: Update the UI to display flashcards by hiding the input section and showing the flashcard and controls.
+    // Purpose: Hide the input section and show the flashcard & controls.
     // --------------------------------------------------
     function setupDeckUI() {
       getEl('inputSection').classList.add('hidden');
       getEl('controls').classList.remove('hidden');
       getEl('flashcard').classList.remove('hidden');
-      initCustomPinyin(); // Initialize custom pinyin mappings
-      currentIndex = 0;   // Reset the flashcard index
-      updateCard();       // Update the flashcard display
+      initCustomPinyin();
+      currentIndex = 0;
+      updateCard();
     }
 
     // --------------------------------------------------
     // Function: initDeck
-    // Purpose: Initialize the flashcard deck from user input.
-    //          - In dropdown mode (if dropdowns are visible and filled), fetch words from the API.
-    //          - Otherwise, use comma-separated words from the textarea.
+    // Purpose: Initialize the flashcard deck using user input.
+    //          If the dropdown section is visible and all dropdowns are selected,
+    //          fetch words from the API; otherwise, use the comma-separated words from the textarea.
     // --------------------------------------------------
     function initDeck() {
       const dropdownSection = getEl("dropdownSection");
       const spinner = getEl('spinner-container');
       if (!dropdownSection.classList.contains("hidden")) {
-        // Dropdown mode: Validate that all dropdowns have a selection.
         if (!isDropdownMode()) {
           alert("请选取所有下拉选项以获取词汇。");
           return;
         }
-        // Show spinner during data fetch
         spinner.classList.remove('hidden');
-        // Use URLSearchParams to build the API URL with query parameters
+        // Use URLSearchParams for cleaner URL construction.
         const params = new URLSearchParams({
           banding: getEl('banding').value,
           level: getEl('level').value,
@@ -558,17 +519,15 @@
         fetch(url)
           .then(response => response.json())
           .then(data => {
-            // Hide spinner after receiving data
             spinner.classList.add('hidden');
             if (data.groupedData) {
-              // Extract words from the returned nested data
               const words = extractWordsFromGroupedData(data.groupedData);
               if (words.length === 0) {
                 alert("未从下拉选择中获取到有效词汇，请检查选择。");
                 return;
               }
               deck = words;
-              setupDeckUI(); // Update the UI to show flashcards
+              setupDeckUI();
             } else {
               alert("从API获取数据失败，请重试。");
             }
@@ -578,7 +537,7 @@
             alert("获取词汇时出错：" + error.message);
           });
       } else {
-        // Manual input mode: Split the input text into an array of words.
+        // Manual input mode: use comma-separated words from the textarea.
         const input = getEl('input-words').value;
         deck = input.split(/[,，]/)
                     .map(word => word.trim())
@@ -593,18 +552,16 @@
 
     // --------------------------------------------------
     // Function: toggleDropdownSection
-    // Purpose: Toggle the visibility of the dropdown section.
-    //          When hiding the dropdowns, reset their selected values.
+    // Purpose: Toggle the visibility of the dropdown section and update the toggle button text.
+    //          When hiding the dropdowns, reset all dropdown values to default.
     // --------------------------------------------------
     function toggleDropdownSection() {
       const dropdownSection = getEl("dropdownSection");
       const toggleButton = getEl("toggleDropdown");
       if (dropdownSection.classList.contains("hidden")) {
-        // Show dropdown section and update button text
         dropdownSection.classList.remove("hidden");
         toggleButton.textContent = "使用自定义词语表";
       } else {
-        // Hide dropdown section, reset selections, and update button text
         dropdownSection.classList.add("hidden");
         toggleButton.textContent = "下拉选择词语表";
         getEl("banding").value = "";
@@ -616,7 +573,7 @@
 
     // --------------------------------------------------
     // Function: returnToEdit
-    // Purpose: Return to the input mode by showing the input section and hiding the flashcard, progress, and controls.
+    // Purpose: Return to the input mode by showing the input section and hiding flashcard, progress indicator, and controls.
     // --------------------------------------------------
     function returnToEdit() {
       getEl('inputSection').classList.remove('hidden');
@@ -627,30 +584,31 @@
 
     // --------------------------------------------------
     // Function: updateCard
-    // Purpose: Update the flashcard's content (front and back) and progress indicator based on the current index.
+    // Purpose: Update the flashcard content (both front and back) based on the current index,
+    //          and update the progress indicator.
     // --------------------------------------------------
     function updateCard() {
       const front = document.querySelector('.front');
       const back = document.querySelector('.back');
       const progress = getEl('progress');
       if (deck[currentIndex]) {
-        // Display the Chinese word on the front side of the card.
+        // Set the front to display the original Chinese text.
         front.textContent = deck[currentIndex];
         front.classList.add('ignore');
 
-        // Convert the Chinese word to pinyin.
+        // Generate the pinyin version of the current word.
         const pinyinText = getPinyin(deck[currentIndex]);
 
-        // Set the back side of the card with the pinyin and the Chinese word.
-        back.innerHTML = <div>
+        // Set the back of the card to include pinyin and a placeholder for the English translation.
+        back.innerHTML = `<div>
                             <div class="pinyin ignore">${pinyinText}</div>
                             <div class="english">${deck[currentIndex]}</div>
-                          </div>;
+                          </div>`;
         // Update the progress indicator text.
-        progress.textContent = Card ${currentIndex + 1} of ${deck.length};
+        progress.textContent = `Card ${currentIndex + 1} of ${deck.length}`;
         progress.classList.remove('hidden');
         
-        // If the translation library is loaded, trigger its execution.
+        // If the translation library is loaded, trigger the translation.
         if (window.translate && typeof translate.execute === 'function') {
           translate.execute();
         }
@@ -664,19 +622,19 @@
     function getPinyin(word) {
       if (window.pinyinPro && window.pinyinPro.pinyin) {
         return window.pinyinPro.pinyin(word, {
-          toneType: 'symbol', // Use tone symbols (e.g., ā, á, ǎ, à)
-          type: 'array',      // Return the result as an array of strings
+          toneType: 'symbol', // Use tone symbols
+          type: 'array',      // Output as an array of strings
           multiple: true,     // Allow multiple pronunciations if applicable
           mode: 'surname'     // Use surname mode if applicable
         }).join(' ');
       }
-      // Fallback: Return the original word if conversion is not possible.
+      // Fallback: return the original word if conversion is not possible.
       return word;
     }
 
     // --------------------------------------------------
     // Function: flipCard
-    // Purpose: Toggle the flip state of the flashcard.
+    // Purpose: Toggle the flip effect on the flashcard.
     // --------------------------------------------------
     function flipCard() {
       getEl('flashcard').classList.toggle('flipped');
@@ -688,7 +646,7 @@
     // --------------------------------------------------
     function prevCard() {
       currentIndex = Math.max(0, currentIndex - 1);
-      // Remove any flipped state before updating the card.
+      // Remove any flipped state before updating.
       getEl('flashcard').classList.remove('flipped');
       updateCard();
     }
@@ -696,27 +654,28 @@
     // --------------------------------------------------
     // Function: nextCard
     // Purpose: Navigate to the next flashcard.
-    //          If the last card is reached, prompt the user to restart.
+    //          If on the last card, ask the user if they want to restart.
     // --------------------------------------------------
     function nextCard() {
       if (currentIndex >= deck.length - 1) {
+        // Use confirm to allow user to cancel restarting.
         if (confirm("You've reached the end of the flashcards! Restart from the beginning?")) {
           currentIndex = 0;
         } else {
-          // If the user cancels, do not change the card.
+          // If the user chooses 'No', do not restart.
           return;
         }
       } else {
         currentIndex++;
       }
-      // Remove any flipped state before updating the card.
+      // Remove any flipped state before updating.
       getEl('flashcard').classList.remove('flipped');
       updateCard();
     }
 
     // --------------------------------------------------
     // Function: shuffleDeck
-    // Purpose: Randomize the order of flashcards using the Fisher-Yates algorithm.
+    // Purpose: Randomize the order of the flashcards using the Fisher-Yates algorithm.
     // --------------------------------------------------
     function shuffleDeck() {
       for (let i = deck.length - 1; i > 0; i--) {
@@ -725,14 +684,14 @@
       }
       // Reset to the first card after shuffling.
       currentIndex = 0;
-      // Remove any flipped state before updating the card.
+      // Remove any flipped state before updating.
       getEl('flashcard').classList.remove('flipped');
       updateCard();
     }
 
     // --------------------------------------------------
     // Event Listener: Window Load
-    // Purpose: Ensure the pinyin-pro library is loaded and initialize custom pinyin mappings.
+    // Purpose: Ensure the pinyinPro library has loaded and initialize custom pinyin mappings.
     // --------------------------------------------------
     window.addEventListener('load', () => {
       if (!window.pinyinPro) {
@@ -743,7 +702,7 @@
 
     // --------------------------------------------------
     // Event Listener: Keyboard Controls
-    // Purpose: Enable navigation and flip actions using keyboard keys.
+    // Purpose: Enable keyboard navigation and flip controls.
     // --------------------------------------------------
     document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft') prevCard();
@@ -753,13 +712,12 @@
 
     // --------------------------------------------------
     // Event Listener: DOMContentLoaded for Visitor Counter
-    // Purpose: Fetch and display the visitor count once the DOM is fully loaded.
     // --------------------------------------------------
     document.addEventListener('DOMContentLoaded', () => {
       const pv = getEl('pageviews');
       if (pv !== null) {
         const uri = location.pathname.replace(/\/$/, '');
-        const url = https://linsnotes.goatcounter.com/counter/${encodeURIComponent(uri)}.json;
+        const url = `https://linsnotes.goatcounter.com/counter/${encodeURIComponent(uri)}.json`;
         fetch(url)
           .then(response => response.json())
           .then(data => {
@@ -773,16 +731,14 @@
     });
   </script>
 
-  <!-- ---------------------------- -->
-  <!-- Translation Library Section  -->
-  <!-- ---------------------------- -->
+  <!-- Translation Library Integration -->
   <script src="https://res.zvo.cn/translate/translate.js"></script>
   <script>
     // Exclude elements with the "ignore" class from translation.
     translate.ignore.class.push('ignore');
     // Use version 2 of the translation library.
     translate.setUseVersion2();
-    // Optionally, force the target language to English.
+    // Optionally, force the target language to English:
     translate.language.setDefaultTo('english');
     translate.changeLanguage('english');
     // Execute the translation initialization.
