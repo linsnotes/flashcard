@@ -372,7 +372,7 @@
   <!-- Main container for all content -->
   <div class="container">
     <!-- Header: Displays the title (marked with "ignore" to exclude from translation) -->
-    <h1 class="ignore">中文闪卡<br>Chinese Flashcards</h1>
+    <h1 class="ignore">中文词汇卡<br>Chinese Flashcards</h1>
     
     <!-- Banner Section -->
     <div id="banner">
@@ -384,11 +384,11 @@
     <div class="input-section ignore" id="inputSection">
       <!-- Manual input textarea -->
       <textarea id="input-words" class="ignore"
-                placeholder="输入中文词汇，用逗号分隔（例如：你好, 谢谢）"
+                placeholder="Enter Chinese words and separate them with commas, for example: 你好, 谢谢."
                 rows="3"></textarea>
 
       <!-- Toggle button for the dropdown section -->
-      <button type="button" id="toggleDropdown" onclick="toggleDropdownSection()">下拉选择词语表</button>
+      <button type="button" id="toggleDropdown" onclick="toggleDropdownSection()">Use a built-in word list from the SG Chinese textbook</button>
 
       <!-- Dropdown selection UI (hidden by default) -->
       <div id="dropdownSection" class="hidden">
@@ -437,12 +437,12 @@
       </div>
       
       <!-- Start button remains at the bottom of the input section -->
-      <button onclick="initDeck()" class="start-btn ignore">开始 Start</button>
+      <button onclick="initDeck()" class="start-btn ignore">Start</button>
       
       <!-- Spinner container (hidden by default) -->
       <div id="spinner-container" class="hidden">
         <div class="spinner"></div>
-        <p class="loading-text">加载中... Please wait!</p>
+        <p class="loading-text">Loading... Please wait!</p>
       </div>
     </div>
 
@@ -552,7 +552,7 @@
       const spinner = getEl('spinner-container');
       if (!dropdownSection.classList.contains("hidden")) {
         if (!isDropdownMode()) {
-          alert("请选取所有下拉选项以获取词汇。");
+          alert("You must select all dropdown options to access the word list!");
           return;
         }
         spinner.classList.remove('hidden');
@@ -571,18 +571,18 @@
             if (data.groupedData) {
               const words = extractWordsFromGroupedData(data.groupedData);
               if (words.length === 0) {
-                alert("未从下拉选择中获取到有效词汇，请检查选择。");
+                alert("No valid words selected. Please check your choice.");
                 return;
               }
               deck = words;
               setupDeckUI();
             } else {
-              alert("从API获取数据失败，请重试。");
+              alert("Failed to retrieve data from the API. Please try again.");
             }
           })
           .catch(error => {
             spinner.classList.add('hidden');
-            alert("获取词汇时出错：" + error.message);
+            alert("Error retrieving vocabulary：" + error.message);
           });
       } else {
         // Manual input mode: use comma-separated words from the textarea.
@@ -591,7 +591,7 @@
                     .map(word => word.trim())
                     .filter(word => word);
         if (deck.length === 0) {
-          alert("请输入有效的中文词汇或使用已有的词语表！");
+          alert("Please enter valid Chinese words or use an existing word list!");
           return;
         }
         setupDeckUI();
@@ -608,10 +608,10 @@
       const toggleButton = getEl("toggleDropdown");
       if (dropdownSection.classList.contains("hidden")) {
         dropdownSection.classList.remove("hidden");
-        toggleButton.textContent = "使用自定义词语表";
+        toggleButton.textContent = "Use a custom word list";
       } else {
         dropdownSection.classList.add("hidden");
-        toggleButton.textContent = "下拉选择词语表";
+        toggleButton.textContent = "Use a built-in word list from the SG Chinese textbook";
         getEl("banding").value = "";
         getEl("level").value = "";
         getEl("unit").value = "";
