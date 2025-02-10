@@ -70,6 +70,39 @@
     }
 
     /* --------------------------------------------------
+       Banner Styles
+       - Banner to display the translation disclaimer.
+    ----------------------------------------------------- */
+    #banner {
+      background-color: #b3d615;
+      color: #171010;
+      text-align: center;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+    /* Fade-out effect when dismissed */
+    #banner.fade-out {
+      opacity: 0;
+    }
+    /* Style for the "Noted" button */
+    #banner button {
+      background-color: #fff;
+      color: #000000;
+      border: none;
+      padding: 10px 20px;
+      margin-top: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    #banner button:hover {
+      background-color: #ff0037;
+    }
+
+    /* --------------------------------------------------
        Input Section Styles
        - Styles for the textarea, dropdown selection, toggle button, and start button.
     ----------------------------------------------------- */
@@ -335,6 +368,12 @@
   <div class="container">
     <!-- Header: Displays the title (marked with "ignore" to exclude from translation) -->
     <h1 class="ignore">中文闪卡<br>Chinese Flashcards</h1>
+    
+    <!-- Banner Section -->
+    <div id="banner">
+      <p>Please note that the English translations on the back of the flashcards are generated using a free machine translation service. Some translations may be inaccurate.</p>
+      <button id="dismiss-banner">Noted</button>
+    </div>
     
     <!-- Input Section: Contains textarea, dropdown toggle, dropdown selection UI, and start button -->
     <div class="input-section ignore" id="inputSection">
@@ -728,6 +767,35 @@
             pv.innerText = '1';
           });
       }
+    });
+  </script>
+
+  <!-- Banner Dismissal Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const banner = document.getElementById('banner');
+      const dismissButton = document.getElementById('dismiss-banner');
+      let dismissed = false;
+      
+      // Auto-dismiss the banner after 10 seconds if the user never clicks "Noted"
+      const autoDismissTimer = setTimeout(() => {
+        if (!dismissed) {
+          banner.classList.add('fade-out');
+          banner.addEventListener('transitionend', function() {
+            banner.style.display = 'none';
+          }, { once: true });
+        }
+      }, 15000); // 10 seconds
+      
+      // Dismiss the banner when the user clicks "Noted"
+      dismissButton.addEventListener('click', function() {
+        dismissed = true; // Mark as dismissed to cancel the auto-dismiss timer
+        clearTimeout(autoDismissTimer);
+        banner.classList.add('fade-out');
+        banner.addEventListener('transitionend', function() {
+          banner.style.display = 'none';
+        }, { once: true });
+      });
     });
   </script>
 
