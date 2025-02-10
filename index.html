@@ -13,7 +13,7 @@
   <script src="https://cdn.jsdelivr.net/npm/pinyin-pro?v=1.0"></script>
   <!-- Set the title of the webpage -->
   <title class="ignore">博闻强记</title>
-
+  <script data-goatcounter="https://linsnotes.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
   <!-- CSS Styling Section -->
   <style>
     /* --------------------------------------------------
@@ -31,6 +31,23 @@
       background-color: #f8f9fa; /* Light gray background */
       color: #333; /* Dark text color */
       line-height: 1.6; /* Improve readability */
+    }
+
+        #visitor-counter {
+      font-size: 1em;
+      margin: 20px 0;
+      text-align: center;
+      color: #333;
+    }
+    
+    #visitor-counter #pageviews {
+      font-weight: bold;
+      color: #000;
+    }
+
+    footer {
+      margin-top: 30px;
+      margin-bottom: 20px;
     }
 
     #translate {
@@ -273,7 +290,12 @@
       <button onclick="shuffleDeck()" class="shuffle-btn ignore">Shuffle Cards</button>
     </div>
   </div>
-
+  
+  <footer>
+    <div id="visitor-counter">
+      Welcome! You’re visitor #<span id="pageviews">Loading...</span> 
+    </div>
+  </footer>
   <!-- JavaScript Section -->
   <script>
     // Global variables: current card index and the deck array.
