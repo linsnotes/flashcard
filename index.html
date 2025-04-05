@@ -715,565 +715,318 @@
     </div>
   </footer>
 
+
   <script>
     // Data source ID constant - replace with your actual data source ID
-const DATA_SOURCE_ID = '17v5FSgIQbGiMbseAYWbTAncfW-XNnk7iknssc1hGaTs';
+    const DATA_SOURCE_ID = '17v5FSgIQbGiMbseAYWbTAncfW-XNnk7iknssc1hGaTs';
 
-// Global variables: current card index, the deck array, and input mode
-let currentIndex = 0;
-let deck = [];
-let fullWordData = []; // Will store full word data including Chinese, English, and Pinyin
-let inputMode = 'custom'; // Tracks which input mode is active: 'custom', 'built-in', or 'google-sheet'
+    // Global variables: current card index, the deck array, and input mode
+    let currentIndex = 0;
+    let deck = [];
+    let fullWordData = [];
+    let inputMode = 'custom';
 
-// --------------------------------------------------
-// Function: initCustomPinyin
-// Purpose: Add custom pinyin mappings for specific Chinese characters.
-// --------------------------------------------------
-function initCustomPinyin() {
-  if (window.pinyinPro && window.pinyinPro.addDict) {
-    window.pinyinPro.addDict({
-      '嗯': 'ḿ',
-      '嗄': 'á',
-      '咯': 'lo',
-      '谁': 'shéi',
-      '〇': 'líng'
-    });
-  }
-}
-
-// --------------------------------------------------
-// Function: setupInputTabs
-// Purpose: Set up the input tab functionality to switch between input methods
-// --------------------------------------------------
-function setupInputTabs() {
-  const tabs = document.querySelectorAll('.input-tab');
-  
-  tabs.forEach(tab => {
-    tab.addEventListener('click', function() {
-      // Remove active class from all tabs and content panels
-      document.querySelectorAll('.input-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.input-content').forEach(content => content.classList.remove('active'));
-      
-      // Add active class to clicked tab
-      this.classList.add('active');
-      
-      // Get the data-type attribute to know which input type was selected
-      inputMode = this.getAttribute('data-type');
-      
-      // Show the corresponding content panel
-      const contentId = `${inputMode}-input`;
-      document.getElementById(contentId).classList.add('active');
-    });
-  });
-}
-
-// --------------------------------------------------
-// Utility: Extract sheet ID from Google Sheets URL
-// --------------------------------------------------
-function extractSheetId(url) {
-  // Common Google Sheets URL formats:
-  // https://docs.google.com/spreadsheets/d/SHEET_ID/edit
-  // https://docs.google.com/spreadsheets/d/SHEET_ID/edit#gid=0
-  
-  const regex = /https:\/\/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/;
-  const match = url.match(regex);
-  
-  if (match && match[1]) {
-    return match[1];
-  }
-  
-  return null;
-}
-
-// --------------------------------------------------
-// Function: fetchVocabularyData
-// Purpose: Fetch and parse vocabulary data from the remote source
-// --------------------------------------------------
-async function fetchVocabularyData() {
-  try {
-    // Show spinner
-    document.getElementById('spinner-container').classList.remove('hidden');
-    
-    // Construct URL to export the spreadsheet as XLSX
-    const exportUrl = `https://docs.google.com/spreadsheets/d/${DATA_SOURCE_ID}/export?format=xlsx`;
-    
-    // Fetch the XLSX file
-    const response = await fetch(exportUrl);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch vocabulary data: ${response.status} ${response.statusText}`);
-    }
-    
-    // Convert the response to array buffer for XLSX parsing
-    const data = await response.arrayBuffer();
-    
-    // Parse the spreadsheet using SheetJS
-    const workbook = XLSX.read(data, { type: 'array' });
-    
-    // Get the first sheet
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    
-    // Convert to JSON
-    const jsonData = XLSX.utils.sheet_to_json(worksheet);
-    
-    // Hide spinner
-    document.getElementById('spinner-container').classList.add('hidden');
-    
-    return jsonData;
-  } catch (error) {
-    // Hide spinner in case of error
-    document.getElementById('spinner-container').classList.add('hidden');
-    console.error('Error fetching vocabulary data:', error);
-    alert(`Failed to fetch word data: ${error.message}`);
-    return [];
-  }
-}
-
-// --------------------------------------------------
-// Function: fetchGoogleSheetData
-// Purpose: Fetch data from user-provided Google Sheet URL
-// --------------------------------------------------
-async function fetchGoogleSheetData(sheetId) {
-  try {
-    // Show spinner
-    document.getElementById('spinner-container').classList.remove('hidden');
-    
-    // Construct URL to export the spreadsheet as XLSX
-    const exportUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=xlsx`;
-    
-    // Fetch the XLSX file
-    const response = await fetch(exportUrl);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch Google Sheet data: ${response.status} ${response.statusText}`);
-    }
-    
-    // Convert the response to array buffer for XLSX parsing
-    const data = await response.arrayBuffer();
-    
-    // Parse the spreadsheet using SheetJS
-    const workbook = XLSX.read(data, { type: 'array' });
-    
-    // Get the first sheet
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    
-    // Convert to JSON with header:1 to get raw array of arrays
-    const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-    
-    // Process raw data: Each row should have at least 2 columns
-    // First column: Term (front of flashcard)
-    // Second column: Definition (back of flashcard)
-    const processedData = rawData.filter(row => row.length >= 2 && row[0] && row[1]).map(row => {
-      return {
-        chinese: String(row[0]),
-        english: String(row[1]),
-        pinyin: ""  // Will be generated using pinyinPro
-      };
-    });
-    
-    // Hide spinner
-    document.getElementById('spinner-container').classList.add('hidden');
-    
-    return processedData;
-  } catch (error) {
-    // Hide spinner in case of error
-    document.getElementById('spinner-container').classList.add('hidden');
-    console.error('Error fetching Google Sheet data:', error);
-    alert(`Failed to fetch data from Google Sheet: ${error.message}`);
-    return [];
-  }
-}
-
-// --------------------------------------------------
-// Function: filterWordsBySelections
-// Purpose: Filter words based on dropdown selections
-// --------------------------------------------------
-function filterWordsBySelections(allWords, banding, level, unit, passage) {
-  return allWords.filter(word => {
-    return word.banding === banding && 
-           word.level === level && 
-           word.unit === unit && 
-           word.passage === passage;
-  });
-}
-
-// --------------------------------------------------
-// Function: initDeck
-// Purpose: Initialize the flashcard deck based on the active input mode
-// --------------------------------------------------
-async function initDeck() {
-  // Determine which input mode is active
-  if (inputMode === 'custom') {
-    // Process custom word list
-    const input = document.getElementById('input-words').value;
-    const manualWords = input.split(/[,，]/)
-                       .map(word => word.trim())
-                       .filter(word => word);
-    
-    if (manualWords.length === 0) {
-      alert("Please enter valid Chinese vocabulary or select an existing vocabulary list.");
-      return;
-    }
-    
-    // For manual input, we create simple word objects with just the Chinese text
-    fullWordData = manualWords.map(word => ({ 
-      chinese: word,
-      english: "", // Not needed for custom mode
-      pinyin: ""   // Will be generated using pinyinPro
-    }));
-    
-    deck = manualWords;
-    
-    // Show flashcards
-    showFlashcards();
-    
-  } else if (inputMode === 'built-in') {
-    // Check if all dropdown selections are made
-    if (!isDropdownSelectionComplete()) {
-      alert("Please select all dropdown options to retrieve the vocabulary.");
-      return;
-    }
-    
-    try {
-      // Fetch all words from data source
-      const allWords = await fetchVocabularyData();
-      
-      if (allWords.length === 0) {
-        alert("No data was retrieved from the database. Please try again later.");
-        return;
+    function initCustomPinyin() {
+      if (window.pinyinPro && window.pinyinPro.addDict) {
+        window.pinyinPro.addDict({
+          '嗯': 'ḿ',
+          '嗄': 'á',
+          '咯': 'lo',
+          '谁': 'shéi',
+          '〇': 'líng'
+        });
       }
-      
-      // Get selected filter values
-      const banding = document.getElementById('banding').value;
-      const level = document.getElementById('level').value;
-      const unit = document.getElementById('unit').value;
-      const passage = document.getElementById('passage').value;
-      
-      // Filter words based on selections
-      const filteredWords = filterWordsBySelections(allWords, banding, level, unit, passage);
-      
-      if (filteredWords.length === 0) {
-        alert("No vocabulary found matching your selection criteria. Please try different selections.");
-        return;
-      }
-      
-      // Store full word data and create simplified deck for display
-      fullWordData = filteredWords;
-      deck = filteredWords.map(word => word.chinese);
-      
-      // Show flashcards
-      showFlashcards();
-      
-    } catch (error) {
-      alert("An error occurred while retrieving the vocabulary: " + error.message);
     }
-    
-  } else if (inputMode === 'google-sheet') {
-    // Process Google Sheet input
-    const sheetUrl = document.getElementById('sheet-url').value.trim();
-    
-    if (!sheetUrl) {
-      alert("Please enter a Google Sheet URL.");
-      return;
-    }
-    
-    const sheetId = extractSheetId(sheetUrl);
-    
-    if (!sheetId) {
-      alert("Invalid Google Sheet URL. Please check the URL and try again.");
-      return;
-    }
-    
-    try {
-      // Fetch data from Google Sheet
-      const sheetData = await fetchGoogleSheetData(sheetId);
-      
-      if (sheetData.length === 0) {
-        alert("No data found in the Google Sheet, or the sheet may be empty.");
-        return;
-      }
-      
-      // Store full word data and create simplified deck for display
-      fullWordData = sheetData;
-      deck = sheetData.map(word => word.chinese);
-      
-      // Initialize custom pinyin for Google Sheet data
-      initCustomPinyin();
-      
-      // Show flashcards
-      showFlashcards();
-      
-    } catch (error) {
-      alert("An error occurred while processing the Google Sheet: " + error.message);
-    }
-  }
-}
 
-// --------------------------------------------------
-// Function: showFlashcards
-// Purpose: Hide input section and show flashcards and controls
-// --------------------------------------------------
-function showFlashcards() {
-  document.getElementById('inputSection').classList.add('hidden');
-  document.getElementById('controls').classList.remove('hidden');
-  document.getElementById('flashcard').classList.remove('hidden');
-  document.getElementById('progress').classList.remove('hidden');
-  
-  // Initialize and display the first card
-  currentIndex = 0;
-  updateCard();
-}
+    function setupInputTabs() {
+      const tabs = document.querySelectorAll('.input-tab');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', function () {
+          document.querySelectorAll('.input-tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.input-content').forEach(content => content.classList.remove('active'));
 
-// --------------------------------------------------
-// Utility: Check if all dropdown options are selected
-// --------------------------------------------------
-function isDropdownSelectionComplete() {
-  return document.getElementById('banding').value !== "" &&
-         document.getElementById('level').value !== "" &&
-         document.getElementById('unit').value !== "" &&
-         document.getElementById('passage').value !== "";
-}
-
-// --------------------------------------------------
-// Function: returnToEdit
-// Purpose: Return to the input mode by showing the input section and hiding flashcard, progress indicator, and controls.
-// --------------------------------------------------
-function returnToEdit() {
-  document.getElementById('inputSection').classList.remove('hidden');
-  document.getElementById('controls').classList.add('hidden');
-  document.getElementById('flashcard').classList.add('hidden');
-  // Hide progress indicator when returning to edit mode.
-  document.getElementById('progress').classList.add('hidden');
-}
-
-// --------------------------------------------------
-// Function: calculateEnglishFontSize
-// Purpose: Dynamically calculate font size based on text length
-// --------------------------------------------------
-function calculateEnglishFontSize(text) {
-  const baseSize = window.innerWidth <= 576 ? 1.5 : 3; // Starting sizes in rem
-  
-  if (text.length > 80) return '1rem';
-  if (text.length > 50) return (baseSize * 0.5) + 'rem';
-  if (text.length > 30) return (baseSize * 0.7) + 'rem';
-  return baseSize + 'rem';
-}
-
-// --------------------------------------------------
-// Function: updateCard
-// Purpose: Update the flashcard content (both front and back) based on the current index,
-//          and update the progress indicator.
-// --------------------------------------------------
-function updateCard() {
-  const front = document.querySelector('.front');
-  const back = document.querySelector('.back');
-  const progress = document.getElementById('progress');
-  
-  if (deck[currentIndex]) {
-    const currentWord = deck[currentIndex];
-    // Find the full word data in our array
-    const wordData = fullWordData[currentIndex];
-    
-    // Set the front to display the Chinese text
-    front.textContent = currentWord;
-    
-    // Generate pinyin if not already available
-    let pinyinText = wordData.pinyin || getPinyin(currentWord);
-    
-    // Different back side content based on mode
-    if (inputMode === 'built-in') {
-      // For built-in mode, show both pinyin and English
-      let englishText = wordData.english || currentWord;
-      
-      // Calculate appropriate font size based on text length
-      const englishFontSize = calculateEnglishFontSize(englishText);
-      
-      // Set the back of the card to include pinyin and English translation with dynamic styling
-      back.innerHTML = `<div>
-                          <div class="pinyin">${pinyinText}</div>
-                          <div class="english" style="font-size: ${englishFontSize};">${englishText}</div>
-                        </div>`;
-    } else if (inputMode === 'custom') {
-      // For custom mode, show ONLY pinyin
-      back.innerHTML = `<div>
-                          <div class="pinyin">${pinyinText}</div>
-                        </div>`;
-    } else if (inputMode === 'google-sheet') {
-      // For Google Sheet mode, show pinyin and the definition from the sheet
-      let definition = wordData.english || '';
-      
-      // Calculate appropriate font size based on text length
-      const definitionFontSize = calculateEnglishFontSize(definition);
-
-      // Calculate appropriate font size for current word based on definition length
-      const currentWordFontSize = definition.length > 80 ? '1.2rem' : 
-                                  definition.length > 50 ? '2rem' : 
-                                  definition.length > 30 ? '2.5rem' : 
-                                  'var(--translation-font-size-desktop)';
-      
-      // Set the back of the card to include pinyin and definition
-      back.innerHTML = `<div>
-                          <div class="current-word" style="font-size: ${currentWordFontSize};">${currentWord}</div>
-                          <div class="english" style="font-size: ${definitionFontSize};">${definition}</div>
-                        </div>`;
-    }
-                      
-    // Update the progress indicator text
-    progress.textContent = `Card ${currentIndex + 1} of ${deck.length}`;
-    progress.classList.remove('hidden');
-  }
-}
-
-// --------------------------------------------------
-// Function: getPinyin
-// Purpose: Convert a Chinese word to its pinyin representation using the pinyinPro library.
-// --------------------------------------------------
-function getPinyin(word) {
-  if (window.pinyinPro && window.pinyinPro.pinyin) {
-    return window.pinyinPro.pinyin(word, {
-      toneType: 'symbol', // Use tone symbols
-      type: 'array',      // Output as an array of strings
-      multiple: true,     // Allow multiple pronunciations if applicable
-      mode: 'surname'     // Use surname mode if applicable
-    }).join(' ');
-  }
-  // Fallback: return the original word if conversion is not possible.
-  return word;
-}
-
-// --------------------------------------------------
-// Function: flipCard
-// Purpose: Toggle the flip effect on the flashcard.
-// --------------------------------------------------
-function flipCard() {
-  document.getElementById('flashcard').classList.toggle('flipped');
-}
-
-// --------------------------------------------------
-// Function: prevCard
-// Purpose: Navigate to the previous flashcard.
-// --------------------------------------------------
-function prevCard() {
-  currentIndex = Math.max(0, currentIndex - 1);
-  // Remove any flipped state before updating.
-  document.getElementById('flashcard').classList.remove('flipped');
-  updateCard();
-}
-
-// --------------------------------------------------
-// Function: nextCard
-// Purpose: Navigate to the next flashcard.
-//          If on the last card, ask the user if they want to restart.
-// --------------------------------------------------
-function nextCard() {
-  if (currentIndex >= deck.length - 1) {
-    // Use confirm to allow user to cancel restarting.
-    if (confirm("You've reached the end of the flashcards! Restart from the beginning?")) {
-      currentIndex = 0;
-    } else {
-      // If the user chooses 'No', do not restart.
-      return;
-    }
-  } else {
-    currentIndex++;
-  }
-  // Remove any flipped state before updating.
-  document.getElementById('flashcard').classList.remove('flipped');
-  updateCard();
-}
-
-// --------------------------------------------------
-// Function: shuffleDeck
-// Purpose: Randomize the order of the flashcards using the Fisher-Yates algorithm.
-// --------------------------------------------------
-function shuffleDeck() {
-  // Create an array of indices
-  const indices = Array.from({ length: deck.length }, (_, i) => i);
-  
-  // Shuffle the indices
-  for (let i = indices.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [indices[i], indices[j]] = [indices[j], indices[i]];
-  }
-  
-  // Create new arrays based on shuffled indices
-  const shuffledDeck = indices.map(i => deck[i]);
-  const shuffledFullWordData = indices.map(i => fullWordData[i]);
-  
-  // Replace the original arrays with shuffled ones
-  deck = shuffledDeck;
-  fullWordData = shuffledFullWordData;
-  
-  // Reset to the first card after shuffling
-  currentIndex = 0;
-  
-  // Remove any flipped state before updating
-  document.getElementById('flashcard').classList.remove('flipped');
-  updateCard();
-}
-
-// --------------------------------------------------
-// Event Listener: Window Load
-// Purpose: Initialize tabs and pinyin when the page loads
-// --------------------------------------------------
-window.addEventListener('load', () => {
-  // Set up tab switching functionality
-  setupInputTabs();
-  
-  if (!window.pinyinPro) {
-    alert("An error occurred while loading the pinyin-pro library. Please refresh the page.");
-  }
-  initCustomPinyin();
-});
-
-// --------------------------------------------------
-// Event Listener: Keyboard Controls
-// Purpose: Enable keyboard navigation and flip controls.
-// --------------------------------------------------
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'ArrowLeft') prevCard();
-  if (e.key === 'ArrowRight') nextCard();
-  if (e.key === ' ' || e.key === 'Enter') flipCard();
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-  const pv = document.getElementById('pageviews');
-  
-  if (pv !== null) {
-    // Get the pathname. If it's "/" leave it intact; if it ends with "/" (and isn’t just "/"), remove it.
-    let uri = location.pathname;
-    if (uri !== "/" && uri.endsWith("/")) {
-      uri = uri.slice(0, -1);
-    }
-    // If on the homepage (empty or "/"), use "/" as the key.
-    if (!uri) {
-      uri = "/";
-    }
-    // Build the JSON endpoint URL
-    const url = `https://linsnotes.goatcounter.com/counter/${encodeURIComponent(uri)}.json`;
-    
-    fetch(url)
-      .then((response) => {
-        if (!response.ok) {
-          // If a 404 or any other error, return a default count of 0 (or another fallback)
-          return { count: "0" };
-        }
-        return response.json();
-      })
-      .then((data) => {
-        // Remove any whitespace from data.count
-        const count = data.count.replace(/\s/g, '');
-        // Format and display the count
-        pv.innerText = new Intl.NumberFormat().format(count);
-        pv.classList.remove('loading');
-      })
-      .catch((error) => {
-        // Fallback if something goes wrong
-        pv.innerText = '0';
-        pv.classList.remove('loading');
+          this.classList.add('active');
+          inputMode = this.getAttribute('data-type');
+          const contentId = `${inputMode}-input`;
+          document.getElementById(contentId).classList.add('active');
+        });
       });
-  }
-});
+    }
 
+    function extractSheetId(url) {
+      const regex = /https:\/\/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/;
+      const match = url.match(regex);
+      return match && match[1] ? match[1] : null;
+    }
+
+    async function fetchVocabularyData() {
+      try {
+        document.getElementById('spinner-container').classList.remove('hidden');
+        const exportUrl = `https://docs.google.com/spreadsheets/d/${DATA_SOURCE_ID}/export?format=xlsx`;
+        const response = await fetch(exportUrl);
+        if (!response.ok) throw new Error(`Failed to fetch vocabulary data: ${response.status} ${response.statusText}`);
+        const data = await response.arrayBuffer();
+        const workbook = XLSX.read(data, { type: 'array' });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        document.getElementById('spinner-container').classList.add('hidden');
+        return jsonData;
+      } catch (error) {
+        document.getElementById('spinner-container').classList.add('hidden');
+        console.error('Error fetching vocabulary data:', error);
+        alert(`Failed to fetch word data: ${error.message}`);
+        return [];
+      }
+    }
+
+    async function fetchGoogleSheetData(sheetId) {
+      try {
+        document.getElementById('spinner-container').classList.remove('hidden');
+        const exportUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=xlsx`;
+        const response = await fetch(exportUrl);
+        if (!response.ok) throw new Error(`Failed to fetch Google Sheet data: ${response.status} ${response.statusText}`);
+        const data = await response.arrayBuffer();
+        const workbook = XLSX.read(data, { type: 'array' });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        const processedData = rawData
+          .filter(row => row.length >= 2 && row[0] && row[1])
+          .map(row => ({
+            chinese: String(row[0]),
+            english: String(row[1]),
+            pinyin: ""
+          }));
+        document.getElementById('spinner-container').classList.add('hidden');
+        return processedData;
+      } catch (error) {
+        document.getElementById('spinner-container').classList.add('hidden');
+        console.error('Error fetching Google Sheet data:', error);
+        alert(`Failed to fetch data from Google Sheet: ${error.message}`);
+        return [];
+      }
+    }
+
+    function filterWordsBySelections(allWords, banding, level, unit, passage) {
+      return allWords.filter(word =>
+        word.banding === banding &&
+        word.level === level &&
+        word.unit === unit &&
+        word.passage === passage
+      );
+    }
+
+    async function initDeck() {
+      if (inputMode === 'custom') {
+        const input = document.getElementById('input-words').value;
+        const manualWords = input.split(/[,，]/).map(word => word.trim()).filter(word => word);
+        if (manualWords.length === 0) {
+          alert("Please enter valid Chinese vocabulary or select an existing vocabulary list.");
+          return;
+        }
+        fullWordData = manualWords.map(word => ({ chinese: word, english: "", pinyin: "" }));
+        deck = manualWords;
+        showFlashcards();
+      } else if (inputMode === 'built-in') {
+        if (!isDropdownSelectionComplete()) {
+          alert("Please select all dropdown options to retrieve the vocabulary.");
+          return;
+        }
+        try {
+          const allWords = await fetchVocabularyData();
+          if (allWords.length === 0) {
+            alert("No data was retrieved from the database. Please try again later.");
+            return;
+          }
+          const banding = document.getElementById('banding').value;
+          const level = document.getElementById('level').value;
+          const unit = document.getElementById('unit').value;
+          const passage = document.getElementById('passage').value;
+          const filteredWords = filterWordsBySelections(allWords, banding, level, unit, passage);
+          if (filteredWords.length === 0) {
+            alert("No vocabulary found matching your selection criteria. Please try different selections.");
+            return;
+          }
+          fullWordData = filteredWords;
+          deck = filteredWords.map(word => word.chinese);
+          showFlashcards();
+        } catch (error) {
+          alert("An error occurred while retrieving the vocabulary: " + error.message);
+        }
+      } else if (inputMode === 'google-sheet') {
+        const sheetUrl = document.getElementById('sheet-url').value.trim();
+        if (!sheetUrl) {
+          alert("Please enter a Google Sheet URL.");
+          return;
+        }
+        const sheetId = extractSheetId(sheetUrl);
+        if (!sheetId) {
+          alert("Invalid Google Sheet URL. Please check the URL and try again.");
+          return;
+        }
+        try {
+          const sheetData = await fetchGoogleSheetData(sheetId);
+          if (sheetData.length === 0) {
+            alert("No data found in the Google Sheet, or the sheet may be empty.");
+            return;
+          }
+          fullWordData = sheetData;
+          deck = sheetData.map(word => word.chinese);
+          initCustomPinyin();
+          showFlashcards();
+        } catch (error) {
+          alert("An error occurred while processing the Google Sheet: " + error.message);
+        }
+      }
+    }
+
+    function showFlashcards() {
+      document.getElementById('inputSection').classList.add('hidden');
+      document.getElementById('controls').classList.remove('hidden');
+      document.getElementById('flashcard').classList.remove('hidden');
+      document.getElementById('progress').classList.remove('hidden');
+      currentIndex = 0;
+      updateCard();
+    }
+
+    function isDropdownSelectionComplete() {
+      return document.getElementById('banding').value !== "" &&
+        document.getElementById('level').value !== "" &&
+        document.getElementById('unit').value !== "" &&
+        document.getElementById('passage').value !== "";
+    }
+
+    function returnToEdit() {
+      document.getElementById('inputSection').classList.remove('hidden');
+      document.getElementById('controls').classList.add('hidden');
+      document.getElementById('flashcard').classList.add('hidden');
+      document.getElementById('progress').classList.add('hidden');
+    }
+
+    function calculateEnglishFontSize(text) {
+      const baseSize = window.innerWidth <= 576 ? 1.5 : 3;
+      if (text.length > 80) return '1rem';
+      if (text.length > 50) return (baseSize * 0.5) + 'rem';
+      if (text.length > 30) return (baseSize * 0.7) + 'rem';
+      return baseSize + 'rem';
+    }
+
+    function updateCard() {
+      const front = document.querySelector('.front');
+      const back = document.querySelector('.back');
+      const progress = document.getElementById('progress');
+      if (deck[currentIndex]) {
+        const currentWord = deck[currentIndex];
+        const wordData = fullWordData[currentIndex];
+        front.textContent = currentWord;
+        let pinyinText = wordData.pinyin || getPinyin(currentWord);
+        if (inputMode === 'built-in') {
+          let englishText = wordData.english || currentWord;
+          const englishFontSize = calculateEnglishFontSize(englishText);
+          back.innerHTML = `<div>
+                              <div class="pinyin">${pinyinText}</div>
+                              <div class="english" style="font-size: ${englishFontSize};">${englishText}</div>
+                            </div>`;
+        } else if (inputMode === 'custom') {
+          back.innerHTML = `<div><div class="pinyin">${pinyinText}</div></div>`;
+        } else if (inputMode === 'google-sheet') {
+          let definition = wordData.english || '';
+          const definitionFontSize = calculateEnglishFontSize(definition);
+          const currentWordFontSize = definition.length > 80 ? '1.2rem' :
+            definition.length > 50 ? '2rem' :
+              definition.length > 30 ? '2.5rem' : 'var(--translation-font-size-desktop)';
+          back.innerHTML = `<div>
+                              <div class="current-word" style="font-size: ${currentWordFontSize};">${currentWord}</div>
+                              <div class="english" style="font-size: ${definitionFontSize};">${definition}</div>
+                            </div>`;
+        }
+        progress.textContent = `Card ${currentIndex + 1} of ${deck.length}`;
+        progress.classList.remove('hidden');
+      }
+    }
+
+    function getPinyin(word) {
+      if (window.pinyinPro && window.pinyinPro.pinyin) {
+        return window.pinyinPro.pinyin(word, {
+          toneType: 'symbol',
+          type: 'array',
+          multiple: true,
+          mode: 'surname'
+        }).join(' ');
+      }
+      return word;
+    }
+
+    function flipCard() {
+      document.getElementById('flashcard').classList.toggle('flipped');
+    }
+
+    function prevCard() {
+      currentIndex = Math.max(0, currentIndex - 1);
+      document.getElementById('flashcard').classList.remove('flipped');
+      updateCard();
+    }
+
+    function nextCard() {
+      if (currentIndex >= deck.length - 1) {
+        if (confirm("You've reached the end of the flashcards! Restart from the beginning?")) {
+          currentIndex = 0;
+        } else {
+          return;
+        }
+      } else {
+        currentIndex++;
+      }
+      document.getElementById('flashcard').classList.remove('flipped');
+      updateCard();
+    }
+
+    function shuffleDeck() {
+      const indices = Array.from({ length: deck.length }, (_, i) => i);
+      for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+      }
+      deck = indices.map(i => deck[i]);
+      fullWordData = indices.map(i => fullWordData[i]);
+      currentIndex = 0;
+      document.getElementById('flashcard').classList.remove('flipped');
+      updateCard();
+    }
+
+    window.addEventListener('load', () => {
+      setupInputTabs();
+      if (!window.pinyinPro) {
+        alert("An error occurred while loading the pinyin-pro library. Please refresh the page.");
+      }
+      initCustomPinyin();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') prevCard();
+      if (e.key === 'ArrowRight') nextCard();
+      if (e.key === ' ' || e.key === 'Enter') flipCard();
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const pv = document.getElementById('pageviews');
+      if (pv !== null) {
+        let uri = location.pathname;
+        if (uri !== "/" && uri.endsWith("/")) uri = uri.slice(0, -1);
+        if (!uri) uri = "/";
+        const url = `https://linsnotes.goatcounter.com/counter/${encodeURIComponent(uri)}.json`;
+        fetch(url)
+          .then(response => response.ok ? response.json() : { count: "0" })
+          .then(data => {
+            const count = data.count.replace(/\s/g, '');
+            pv.innerText = new Intl.NumberFormat().format(count);
+            pv.classList.remove('loading');
+          })
+          .catch(() => {
+            pv.innerText = '0';
+            pv.classList.remove('loading');
+          });
+      }
+    });
   </script>
+
 </html>
